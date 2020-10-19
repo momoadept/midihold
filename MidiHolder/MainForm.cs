@@ -133,5 +133,10 @@ namespace MidiHolder
             midi?.Dispose();
             base.Dispose(disposing);
         }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            midi.ReleaseDelayMs = (int) nmrRelease.Value;
+        }
     }
 }

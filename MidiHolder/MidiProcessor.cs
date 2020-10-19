@@ -27,12 +27,14 @@ namespace MidiHolder
             }
         }
 
+        public int ReleaseDelayMs { get; set; } = 0;
+
         private InputDevice activeInput;
         private OutputDevice activeOutput;
         private Feed feed;
 
         private Dictionary<int, ChannelMessage> currentlyPressedNotes = new Dictionary<int, ChannelMessage>();
-        private Queue<ChannelMessage> bufferedNoteOffs = new Queue<ChannelMessage>();
+        private Dictionary<int, ChannelMessage> bufferedNoteOffs = new Dictionary<int, ChannelMessage>();
         private bool hold;
 
         public MidiProcessor(Feed feed)
@@ -126,9 +128,6 @@ namespace MidiHolder
 
         private void HandleNoteEvent(ChannelMessage message)
         {
-            var note = (Note)(message.Data1 % 12);
-            var octave = message.Data1 / 12;
-
             if (!Hold && Passthrough)
             {
                 activeOutput?.Send(message);
@@ -146,7 +145,21 @@ namespace MidiHolder
             {
                 if (!currentlyPressedNotes.Any())
                 {
-                    ReleseAllNoteOffs();
+                    if (ReleaseDelayMs == 0)
+                    {
+                        ReleseAllNoteOffs();
+                    }
+                    else
+                    {
+                        feed.Set(Array.Empty<string>().ToList());
+                        var toRelease = bufferedNoteOffs.Values.ToList();
+                        bufferedNoteOffs.Clear();
+                        Task.Run(() =>
+                        {
+                            Task.Delay(ReleaseDelayMs).Wait();
+                            ReleseNotes(toRelease);
+                        });
+                    }
                 }
 
                 currentlyPressedNotes.Add(message.Data1, message);
@@ -158,7 +171,8 @@ namespace MidiHolder
                 if (currentlyPressedNotes.ContainsKey(message.Data1))
                 {
                     currentlyPressedNotes.Remove(message.Data1);
-                    bufferedNoteOffs.Enqueue(message);
+                    if (!bufferedNoteOffs.ContainsKey(message.Data1))
+                        bufferedNoteOffs.Add(message.Data1, message);
                 }
                 else
                 {
@@ -166,12 +180,12 @@ namespace MidiHolder
                 }
             }
 
-            feed.Set(new List<string>() { string.Join(", ", bufferedNoteOffs.Select(it => it.Data1).Select(NoteToString)) });
+            feed.Set(new List<string>() { string.Join(", ", bufferedNoteOffs.Values.Select(it => it.Data1).Select(NoteToString)) });
         }
 
         public void ReleseAllNoteOffs()
         {
-            foreach (var noteOff in bufferedNoteOffs)
+            foreach (var noteOff in bufferedNoteOffs.Values)
             {
                 activeOutput?.Send(noteOff);
             }
@@ -179,6 +193,17 @@ namespace MidiHolder
             bufferedNoteOffs.Clear();
 
             feed.Set(Array.Empty<string>().ToList());
+        }
+
+        private void ReleseNotes(IEnumerable<ChannelMessage> notes)
+        {
+            foreach (var noteOff in notes)
+            {
+                if (bufferedNoteOffs.Values.Count(it => it.Data1 == noteOff.Data1) < 1)
+                {
+                    activeOutput?.Send(noteOff);
+                }
+            }
         }
 
         private string NoteToString(int note)
