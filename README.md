@@ -20,6 +20,8 @@ If doesn't work, your DAW is probably keeping to itself the MIDI port you're try
 6. In your DAW, set MIDI In on your track to the virtual port created with LoopMidi. You should now be able to record MIDI as though from your controller directly
 7. Now you can press "Hold" to enable Hold Mode. The app will sustain a chord you've played untill you play a new one. You can add any number of notes to a held chord if you are holding down at least one key.
 
+You can use Release setting to blend between chords more seamlessly. Useful for sounds with slow attack. It sets the number of miliseconds between when a new chord is entered and the old one is released.
+
 # Plans
 
 I've created this app for personal use. Unless I find any bugs that affect me, or this project gets public attention, I don't plan to update it further. Feel free to ask for features, but I can make no promises for now.
