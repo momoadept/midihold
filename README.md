@@ -9,7 +9,7 @@ Should work with anything
 You would need to use LoopMidi (https://www.tobias-erichsen.de/software/loopmidi.html) to create virtual midi device if you want to send resulting MIDI to your DAW
 
 0. Create a virtual MIDI port using LoopMidi
-1. Download the latest release from this repo containing the executable
+1. Download the latest release from this repo containing the executable (https://github.com/momoadept/midihold/releases)
 2. Run the thing
 3. In the upper list select your MIDI keyboard
 4. In the lower list select a virtual MIDI port created with LoopMidi
